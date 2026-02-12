@@ -1,0 +1,17 @@
+# venv / python cache
+venv/
+__pycache__/
+*.pyc
+
+# secrets
+.env
+state.json
+
+# artifacts / logs
+artifacts/
+*.png
+*.html
+
+# OS
+.DS_Store
+Thumbs.db
