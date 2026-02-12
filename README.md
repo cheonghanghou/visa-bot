@@ -60,7 +60,8 @@ MAIL_TO=your_email@gmail.com
 ```bash
 python save_session.py
 ```
-A Chrome window will open.
+A Chrome window will open. 
+Notice that this might not work, unnecessary to do this, you can skip this and go straight to the monitor_slots.py
 1. Login to Prenot@Mi
 2. Ensure you can see the Services page
 3. Close the browser window
