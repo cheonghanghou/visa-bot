@@ -1,83 +1,64 @@
 # Prenot@Mi Visa Slot Monitor (Boston + New York)
 
-Local monitoring tool for checking Italian visa appointment availability on Prenot@Mi and notifying you when the **VISAS** service becomes bookable.
+用于后台监测 Prenot@Mi 的签证预约状态：
+- 默认每 **5 分钟**检查一次
+- 每 **30 分钟**发送一次运行进度（Heartbeat）
+- 一旦检测到 `VISAS` 出现 `BOOK`，立即发送告警
 
-## What it does
-- Opens Prenot@Mi Services page (Boston + New York)
-- Reads the **VISAS** row "Booking" status
-- If it changes to a clickable **BOOK** state → triggers notification and saves evidence (HTML/PNG)
+## 这版重点改进
+- 使用项目内独立 `session_profile/`，不再占用你日常 Chrome 的真实 Profile。
+- 启动前自动清理异常退出留下的 Chrome 锁文件（`Singleton*`），降低闪退/锁死概率。
+- 监控程序支持 `Ctrl+C` / `SIGTERM` 优雅退出，退出时会关闭浏览器上下文，减少 profile 被锁住问题。
 
 ## Requirements
-- Windows / macOS
 - Python 3.9+
-- Google Chrome installed
-- A Prenot@Mi account (you will login once via a real browser profile)
+- Google Chrome
+- Prenot@Mi 账号
 
----
-
-## Quick Start (one-time setup)
-
-### 1) Clone
-```bash
-git clone https://github.com/cheonghanghou/visa-bot.git
-cd visa-bot
-```
-
-### 2) Create & activate venv (recommended)
-#### Windows:
-```bash
-python -m venv venv
-venv\Scripts\activate
-```
-
-#### macOS/Linux:
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
-### 3) Install dependencies
+## 安装
 ```bash
 pip install -r requirements.txt
-python -m playwright install
+python -m playwright install chrome
 ```
 
-### 4) Create .env
-```bash
-Create a file named .env in the project root (simply use .env.example):
+## 配置 `.env`
+```dotenv
 BOSTON_URL=https://prenotami.esteri.it/Services
 NY_URL=https://prenotami.esteri.it/Services
-CHECK_INTERVAL_SECONDS=900
+
+# 每5分钟检查一次
+CHECK_INTERVAL_SECONDS=300
+# 每30分钟发送进度
+STATUS_REPORT_SECONDS=1800
+
+# BOOK告警最短间隔（避免连续轰炸）
+COOLDOWN_SECONDS=600
 
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
 SMTP_PASS=your_gmail_app_password
 MAIL_TO=your_email@gmail.com
+
+# 可选：Telegram
+TELEGRAM_BOT_TOKEN=
+TELEGRAM_CHAT_ID=
+
+# 可选：会话目录（默认 session_profile）
+SESSION_DIR=session_profile
 ```
 
-### First-time login (save session)
+## 首次登录（仅一次）
 ```bash
 python save_session.py
 ```
-A Chrome window will open. 
-Notice that this might not work, unnecessary to do this, you can skip this and go straight to the monitor_slots.py
-1. Login to Prenot@Mi
-2. Ensure you can see the Services page
-3. Close the browser window
-4. Return to terminal and press Enter
+完成登录后回终端按回车，登录状态会保存在 `session_profile/`。
 
-### Run the monitor
-Before running: close any Chrome instances using the same profile.
+## 启动监控
 ```bash
 python monitor_slots.py
 ```
-The script checks every CHECK_INTERVAL_SECONDS and alerts when VISAS becomes bookable.
 
-### Notes
-This project uses Playwright (real browser automation).
-Website anti-bot protections may temporarily restrict access if you check too aggressively.
-Recommended interval: 10–20 minutes.
-
-### Disclaimer
-Personal use only.
+## 注意
+- 不要并行启动多个监控实例。
+- 若系统异常关机，下次启动会自动尝试清理 Chrome stale lock 文件。
